@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Balmaceda Fest Photobooth</title>
+
+<style>
+
+body{
+margin:0;
+background:#111;
+font-family:Arial;
+text-align:center;
+color:white;
+}
+
+h2{
+margin-top:10px;
+}
+
+#container{
+position:relative;
+display:inline-block;
+width:90vw;
+max-width:400px;
+}
+
+video{
+width:100%;
+border-radius:15px;
+}
+
+#countdown{
+position:absolute;
+top:50%;
+left:50%;
+transform:translate(-50%,-50%);
+font-size:80px;
+font-weight:bold;
+display:none;
+}
+
+button{
+margin-top:20px;
+padding:15px 25px;
+font-size:18px;
+border:none;
+border-radius:12px;
+background:#ff4081;
+color:white;
+}
+
+</style>
+</head>
+
+<body>
+
+<h2>📸 Balmaceda Fest Photobooth</h2>
+
+<div id="container">
+<video id="video" autoplay playsinline></video>
+<div id="countdown"></div>
+</div>
+
+<br>
+
+<button onclick="startSession()">Tomar Fotos</button>
+
+<canvas id="canvas" style="display:none;"></canvas>
+
+<script>
+
+const video=document.getElementById("video");
+
+navigator.mediaDevices.getUserMedia({
+video:{facingMode:"user"}
+}).then(stream=>{
+video.srcObject=stream;
+});
+
+let photos=[];
+
+function startSession(){
+
+photos=[];
+
+takeSequence(4);
+
+}
+
+function takeSequence(total){
+
+if(photos.length>=total){
+
+createStrip();
+return;
+
+}
+
+countdown(3,()=>{
+capture();
+takeSequence(total);
+});
+
+}
+
+function countdown(num,callback){
+
+const cd=document.getElementById("countdown");
+
+cd.style.display="block";
+cd.innerHTML=num;
+
+const timer=setInterval(()=>{
+
+num--;
+
+if(num>0){
+
+cd.innerHTML=num;
+
+}else{
+
+clearInterval(timer);
+cd.style.display="none";
+callback();
+
+}
+
+},1000);
+
+}
+
+function capture(){
+
+const canvas=document.getElementById("canvas");
+const ctx=canvas.getContext("2d");
+
+canvas.width=video.videoWidth;
+canvas.height=video.videoHeight;
+
+ctx.drawImage(video,0,0);
+
+photos.push(canvas.toDataURL());
+
+}
+
+function createStrip(){
+
+const canvas=document.createElement("canvas");
+const ctx=canvas.getContext("2d");
+
+const width=400;
+const height=1600;
+
+canvas.width=width;
+canvas.height=height;
+
+let imgHeight=400;
+
+photos.forEach((src,i)=>{
+
+const img=new Image();
+
+img.onload=function(){
+
+ctx.drawImage(img,0,i*imgHeight,width,imgHeight);
+
+if(i===photos.length-1){
+
+download(canvas);
+
+}
+
+};
+
+img.src=src;
+
+});
+
+}
+
+function download(canvas){
+
+const link=document.createElement("a");
+
+link.download="photobooth-strip.png";
+
+link.href=canvas.toDataURL();
+
+link.click();
+
+}
+
+</script>
+
+</body>
+</html>
